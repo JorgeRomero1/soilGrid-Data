@@ -1,0 +1,63 @@
+---
+title: "APSIM"
+author: "Jorge Romero"
+date: "2024-09-05"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(apsimx)
+```
+
+```{r}
+ams.sgrds <- get_isric_soil_profile(lonlat = c(43.855833, 40.762778))
+ams.df <- as.data.frame(ams.sgrds$soil)
+ams.sgrds
+```
+
+
+```{r}
+# Define a list of locations with their respective coordinates
+locations <- list(
+  Gyumri = c(43.855833, 40.762778),   # Example coordinates for Location 1, Long and Lat
+  Sisan = c(46.04306, 39.52713),
+  Masrik = c(44.412778, 41.001944),
+  Stepanavan = c(44.412778, 41.001944)
+)
+
+# Initialize an empty data frame to store all soil profiles
+all_soil_profiles <- data.frame()
+
+# Loop through each location and get the soil profile
+for (location in names(locations)) {
+  lonlat <- locations[[location]]
+  
+  # Get the soil profile for the current location
+  soil_profile <- get_isric_soil_profile(lonlat = lonlat)
+  
+  # Convert the soil data to a data frame
+  soil_df <- as.data.frame(soil_profile$soil)
+  # Add a new column with Soil Albedo 
+  soil_df$SALB <- soil_profile$soilwat$Salb
+  
+  soil_df$CN2 <- soil_profile$soilwat$CN2Bare
+  
+  soil_df$soilType <- soil_profile$metadata$SoilType
+  # Add a column for the location name and coordinates
+  soil_df$location <- location
+  soil_df$lat <- soil_profile$metadata$Latitude
+  soil_df$lon <- soil_profile$metadata$Longitude
+  
+  # Append the current location's soil data to the final data frame
+  all_soil_profiles <- rbind(all_soil_profiles, soil_df)
+}
+# View the combined data frame
+print(all_soil_profiles)
+var_soil_profiles <- all_soil_profiles[c("location", "lat", "lon", "SALB", "CN2" ,"soilType", "Depth", "Thickness",
+                    "ParticleSizeClay", "ParticleSizeSilt", "ParticleSizeSand", "BD", "LL15", "DUL", "SAT",
+                    "PH", "Wheat.XF")]
+
+write.csv(var_soil_profiles, "../Row data for model/soilGridArmennia.csv")
+```
+
